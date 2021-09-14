@@ -1,0 +1,52 @@
+version: 2.1
+executors:
+  docker-publisher:
+    environment:
+      IMAGE_NAME: s3839767/takehome2-sept
+    docker:
+      - image: circleci/buildpack-deps:stretch
+jobs:
+  build:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t s3839767/takehome2-sept:latest .
+      - run:
+          name: Archive Docker image
+          command: docker save -o image.tar s3839767/takehome2-sept
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./image.tar
+  publish-latest:
+    executor: docker-publisher
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo $DOCKERHUB_PASS | docker login -u "s3839767" --password-stdin
+            docker push s3839767/takehome2-sept:latest
+workflows:
+  version: 2
+  build-master:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: main
+      - publish-latest:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
