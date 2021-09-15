@@ -34,8 +34,7 @@ jobs:
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
-            aws configure
-            echo $DOCKERHUB_PASS | docker login -u "s3839767" --password-stdin
+            echo $DOCKERHUB_PASS | docker login -u "s3839767" -p --password-stdin
             docker push s3839767/takehome2-sept:latest
 workflows:
   version: 2
